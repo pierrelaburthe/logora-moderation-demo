@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: logora-moderation-demo
+    runtime: python
+    plan: free
+    buildCommand: ""
+    startCommand: python3 serve.py
+    envVars:
+      - key: ANTHROPIC_API_KEY
+        sync: false   # à renseigner manuellement dans le dashboard Render
+      - key: LOGORA_MODEL
+        value: claude-sonnet-4-6
+      - key: PYTHON_VERSION
+        value: "3.11"

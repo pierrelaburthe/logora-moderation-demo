@@ -1,0 +1,1548 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Modération Logora — Démo temps réel</title>
+<style>
+  :root {
+    --red: #E30613;
+    --red-dark: #B30410;
+    --black: #111;
+    --gray-900: #1a1a1a;
+    --gray-800: #2a2a2a;
+    --gray-700: #3a3a3a;
+    --gray-300: #c4c4c4;
+    --gray-200: #e5e5e5;
+    --gray-100: #f4f4f4;
+    --green: #1f9d55;
+    --green-light: #e6f7ed;
+    --red-light: #fdecec;
+    --amber: #f59e0b;
+    --amber-light: #fef3c7;
+    --shadow: 0 4px 12px rgba(0,0,0,0.06);
+    --radius: 10px;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background: var(--gray-100);
+    color: var(--black);
+    line-height: 1.5;
+  }
+  header {
+    background: var(--black);
+    color: white;
+    padding: 18px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 4px solid var(--red);
+  }
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .logo-mark {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .brand-logora {
+    background: var(--red);
+    color: white;
+    font-weight: 800;
+    padding: 6px 12px;
+    border-radius: 4px;
+    letter-spacing: 0.3px;
+    font-size: 18px;
+  }
+  .brand-x {
+    color: var(--gray-300);
+    font-size: 18px;
+    font-weight: 400;
+  }
+  .brand-lequipe {
+    background: white;
+    color: var(--red);
+    font-weight: 900;
+    font-style: italic;
+    padding: 6px 12px;
+    border-radius: 4px;
+    letter-spacing: 0.5px;
+    font-size: 18px;
+  }
+  .logo-title {
+    font-size: 18px;
+    font-weight: 600;
+  }
+  .logo-subtitle {
+    font-size: 12px;
+    color: var(--gray-300);
+    margin-top: 2px;
+  }
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 13px;
+    color: var(--gray-300);
+  }
+  .partner-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255,255,255,0.1);
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+  }
+  .container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 28px 32px 60px;
+  }
+  .settings-bar {
+    background: white;
+    border-radius: var(--radius);
+    padding: 18px 22px;
+    margin-bottom: 24px;
+    box-shadow: var(--shadow);
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    gap: 16px;
+    align-items: end;
+  }
+  .intro-bar {
+    background: white;
+    border-radius: var(--radius);
+    padding: 18px 22px;
+    margin-bottom: 24px;
+    box-shadow: var(--shadow);
+    border-left: 4px solid var(--red);
+  }
+  .intro-text {
+    color: var(--gray-900);
+    font-size: 14px;
+    line-height: 1.6;
+  }
+  .field label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--gray-700);
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+  .field input, .field select, .field textarea {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px solid var(--gray-200);
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: inherit;
+    background: white;
+    transition: border-color 0.15s;
+  }
+  .field input:focus, .field select:focus, .field textarea:focus {
+    outline: none;
+    border-color: var(--red);
+    box-shadow: 0 0 0 3px rgba(227,6,19,0.1);
+  }
+  .api-status {
+    font-size: 12px;
+    color: var(--gray-700);
+    padding: 8px 12px;
+    background: var(--gray-100);
+    border-radius: 6px;
+    white-space: nowrap;
+  }
+  .api-status.ok { background: var(--green-light); color: var(--green); }
+  .api-status.warn { background: var(--amber-light); color: #92400e; }
+
+  .tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 20px;
+    background: white;
+    padding: 6px;
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    width: fit-content;
+  }
+  .tab {
+    padding: 10px 22px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--gray-700);
+    border-radius: 8px;
+    transition: all 0.15s;
+    font-family: inherit;
+  }
+  .tab.active {
+    background: var(--red);
+    color: white;
+  }
+  .tab:hover:not(.active) {
+    background: var(--gray-100);
+  }
+
+  .panel {
+    background: white;
+    border-radius: var(--radius);
+    padding: 26px;
+    box-shadow: var(--shadow);
+    margin-bottom: 24px;
+  }
+  .panel-title {
+    font-size: 16px;
+    font-weight: 700;
+    margin: 0 0 18px 0;
+    color: var(--black);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .panel-title::before {
+    content: "";
+    width: 4px;
+    height: 18px;
+    background: var(--red);
+    border-radius: 2px;
+  }
+
+  textarea {
+    min-height: 110px;
+    resize: vertical;
+    font-family: inherit;
+  }
+  textarea.batch {
+    min-height: 180px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 13px;
+  }
+  .row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+  .row.full { grid-template-columns: 1fr; }
+
+  .btn {
+    background: var(--red);
+    color: white;
+    border: none;
+    padding: 13px 28px;
+    font-size: 15px;
+    font-weight: 700;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.15s;
+    font-family: inherit;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .btn:hover:not(:disabled) {
+    background: var(--red-dark);
+  }
+  .btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  .btn.secondary {
+    background: white;
+    color: var(--gray-700);
+    border: 1px solid var(--gray-200);
+  }
+  .btn.secondary:hover:not(:disabled) {
+    background: var(--gray-100);
+    color: var(--black);
+  }
+
+  .actions {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    margin-top: 4px;
+  }
+  .hint {
+    font-size: 12px;
+    color: var(--gray-700);
+    margin-left: auto;
+  }
+
+  /* Result card */
+  .result-card {
+    margin-top: 20px;
+    border-radius: var(--radius);
+    overflow: hidden;
+    border: 1px solid var(--gray-200);
+    animation: slideIn 0.25s ease-out;
+  }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .result-header {
+    padding: 16px 22px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--gray-200);
+  }
+  .result-header.accepted { background: var(--green-light); }
+  .result-header.rejected { background: var(--red-light); }
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: 0.3px;
+  }
+  .badge.accepted {
+    background: var(--green);
+    color: white;
+  }
+  .badge.rejected {
+    background: var(--red);
+    color: white;
+  }
+  .badge-icon {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: white;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--green);
+    font-size: 10px;
+    font-weight: 900;
+  }
+  .badge.rejected .badge-icon { color: var(--red); }
+  .reason-label {
+    font-weight: 600;
+    color: var(--gray-700);
+    font-size: 14px;
+  }
+
+  .result-body {
+    padding: 20px 22px;
+  }
+  .comment-preview {
+    background: var(--gray-100);
+    padding: 14px 16px;
+    border-left: 3px solid var(--gray-300);
+    border-radius: 4px;
+    font-size: 14px;
+    color: var(--gray-900);
+    margin-bottom: 18px;
+    font-style: italic;
+  }
+  .explanation {
+    color: var(--gray-900);
+    font-size: 14px;
+    margin-bottom: 18px;
+  }
+
+  .score-block {
+    margin-top: 14px;
+  }
+  .score-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--gray-700);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    margin-bottom: 6px;
+  }
+  .score-value {
+    color: var(--black);
+    font-size: 14px;
+  }
+  .score-bar {
+    height: 10px;
+    background: var(--gray-200);
+    border-radius: 6px;
+    overflow: hidden;
+    position: relative;
+  }
+  .score-fill {
+    height: 100%;
+    border-radius: 6px;
+    transition: width 0.5s ease-out;
+  }
+  .score-bands {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    color: var(--gray-700);
+    margin-top: 4px;
+  }
+
+  /* Batch table */
+  .batch-results {
+    margin-top: 20px;
+  }
+  .batch-summary {
+    display: flex;
+    gap: 14px;
+    margin-bottom: 16px;
+  }
+  .stat {
+    background: white;
+    padding: 12px 18px;
+    border-radius: 8px;
+    border: 1px solid var(--gray-200);
+    flex: 1;
+  }
+  .stat-label {
+    font-size: 11px;
+    color: var(--gray-700);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    font-weight: 600;
+  }
+  .stat-value {
+    font-size: 24px;
+    font-weight: 800;
+    margin-top: 4px;
+  }
+  .stat.accepted .stat-value { color: var(--green); }
+  .stat.rejected .stat-value { color: var(--red); }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: var(--shadow);
+    font-size: 13px;
+  }
+  th {
+    background: var(--gray-900);
+    color: white;
+    padding: 12px 14px;
+    text-align: left;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    font-weight: 600;
+  }
+  td {
+    padding: 14px;
+    border-top: 1px solid var(--gray-200);
+    vertical-align: top;
+  }
+  tr:hover td { background: #fafafa; }
+  td.decision { white-space: nowrap; }
+  .mini-badge {
+    display: inline-block;
+    padding: 3px 9px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+  }
+  .mini-badge.accepted { background: var(--green-light); color: var(--green); }
+  .mini-badge.rejected { background: var(--red-light); color: var(--red); }
+  td.score-cell {
+    font-weight: 700;
+    text-align: center;
+  }
+  .mini-score-bar {
+    height: 4px;
+    background: var(--gray-200);
+    border-radius: 2px;
+    margin-top: 4px;
+    overflow: hidden;
+  }
+  .mini-score-fill {
+    height: 100%;
+    border-radius: 2px;
+  }
+  .comment-cell {
+    max-width: 320px;
+    font-size: 13px;
+    color: var(--gray-900);
+  }
+
+  .loader {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border: 2px solid rgba(255,255,255,0.4);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .error {
+    background: var(--red-light);
+    color: var(--red-dark);
+    padding: 12px 16px;
+    border-radius: 8px;
+    margin-top: 14px;
+    font-size: 13px;
+    border-left: 3px solid var(--red);
+  }
+
+  .progress-bar-batch {
+    height: 4px;
+    background: var(--gray-200);
+    border-radius: 2px;
+    margin-top: 12px;
+    overflow: hidden;
+  }
+  .progress-bar-batch-fill {
+    height: 100%;
+    background: var(--red);
+    transition: width 0.3s;
+  }
+
+  .hidden { display: none !important; }
+
+  .server-banner {
+    background: #fef3c7;
+    border: 1px solid #f59e0b;
+    border-left: 4px solid #f59e0b;
+    padding: 16px 20px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    color: #78350f;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+  .server-banner strong { color: #78350f; }
+  .server-banner code {
+    display: block;
+    background: #1a1a1a;
+    color: #e5e5e5;
+    padding: 10px 14px;
+    border-radius: 6px;
+    margin: 8px 0 0 0;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 12px;
+    user-select: all;
+  }
+  .server-banner.ok {
+    background: #e6f7ed;
+    border-color: #1f9d55;
+    color: #14532d;
+  }
+
+  /* Feedback / corrections */
+  .feedback-area {
+    border-top: 1px solid var(--gray-200);
+    padding: 14px 22px;
+    background: #fafafa;
+  }
+  .feedback-toggle {
+    background: transparent;
+    border: 1px solid var(--gray-200);
+    color: var(--gray-700);
+    padding: 7px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    font-family: inherit;
+    font-weight: 500;
+  }
+  .feedback-toggle:hover {
+    background: white;
+    border-color: var(--red);
+    color: var(--red);
+  }
+  .feedback-form {
+    margin-top: 14px;
+    padding: 16px;
+    background: white;
+    border-radius: 8px;
+    border: 1px solid var(--gray-200);
+  }
+  .feedback-form h4 {
+    margin: 0 0 12px 0;
+    font-size: 13px;
+    color: var(--gray-700);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    font-weight: 700;
+  }
+  .feedback-form .radio-group {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 12px;
+  }
+  .feedback-form .radio-group label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    cursor: pointer;
+    padding: 6px 12px;
+    border: 1px solid var(--gray-200);
+    border-radius: 6px;
+    transition: all 0.15s;
+  }
+  .feedback-form .radio-group label:hover { border-color: var(--red); }
+  .feedback-form .radio-group input[type="radio"]:checked + span { font-weight: 600; }
+  .feedback-form .radio-group label:has(input:checked) {
+    background: var(--red-light);
+    border-color: var(--red);
+    color: var(--red-dark);
+  }
+  .feedback-form select,
+  .feedback-form textarea {
+    width: 100%;
+    padding: 9px 12px;
+    border: 1px solid var(--gray-200);
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 13px;
+    margin-bottom: 10px;
+    box-sizing: border-box;
+  }
+  .feedback-form textarea {
+    min-height: 70px;
+    resize: vertical;
+  }
+  .feedback-form .form-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+  }
+  .btn-small {
+    padding: 8px 16px;
+    font-size: 13px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: inherit;
+    font-weight: 600;
+    border: none;
+  }
+  .btn-small.primary {
+    background: var(--red);
+    color: white;
+  }
+  .btn-small.primary:hover { background: var(--red-dark); }
+  .btn-small.cancel {
+    background: white;
+    color: var(--gray-700);
+    border: 1px solid var(--gray-200);
+  }
+  .btn-small.cancel:hover { background: var(--gray-100); }
+  .feedback-success {
+    background: var(--green-light);
+    color: #14532d;
+    padding: 12px 16px;
+    border-radius: 8px;
+    margin-top: 12px;
+    font-size: 13px;
+    font-weight: 500;
+    border-left: 3px solid var(--green);
+  }
+  .corrections-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    background: rgba(255,255,255,0.18);
+    padding: 3px 8px;
+    border-radius: 10px;
+    margin-left: 6px;
+  }
+  .corrections-badge.zero { display: none; }
+
+  /* List of corrections in details section */
+  .corrections-list {
+    margin-top: 14px;
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .correction-item {
+    padding: 14px 16px;
+    border-top: 1px solid var(--gray-200);
+    font-size: 13px;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+  }
+  .correction-item:first-child { border-top: none; }
+  .correction-item .ci-body { flex: 1; }
+  .correction-item .ci-quote {
+    color: var(--gray-700);
+    font-style: italic;
+    margin-bottom: 6px;
+  }
+  .correction-item .ci-arrow {
+    color: var(--gray-700);
+    font-size: 12px;
+  }
+  .correction-item .ci-arrow strong { color: var(--black); }
+  .correction-item .ci-just {
+    color: var(--gray-900);
+    margin-top: 6px;
+    font-size: 12px;
+  }
+  .correction-item .ci-delete {
+    background: transparent;
+    border: none;
+    color: var(--gray-700);
+    cursor: pointer;
+    font-size: 16px;
+    padding: 4px 8px;
+    border-radius: 4px;
+  }
+  .correction-item .ci-delete:hover {
+    background: var(--red-light);
+    color: var(--red);
+  }
+
+  details.advanced {
+    margin-top: 20px;
+    padding: 14px 18px;
+    background: var(--gray-100);
+    border-radius: 8px;
+    font-size: 13px;
+  }
+  details.advanced summary {
+    cursor: pointer;
+    font-weight: 600;
+    color: var(--gray-700);
+  }
+  details.advanced pre {
+    background: var(--gray-900);
+    color: #e5e5e5;
+    padding: 14px;
+    border-radius: 6px;
+    overflow-x: auto;
+    font-size: 12px;
+    margin-top: 12px;
+  }
+
+  footer {
+    text-align: center;
+    color: var(--gray-700);
+    font-size: 12px;
+    padding: 24px;
+  }
+
+  @media (max-width: 768px) {
+    .settings-bar { grid-template-columns: 1fr; }
+    .row { grid-template-columns: 1fr; }
+    .container { padding: 20px 16px 40px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-mark">
+      <span class="brand-logora">Logora</span>
+      <span class="brand-x">×</span>
+      <span class="brand-lequipe">L'Équipe</span>
+    </div>
+    <div>
+      <div class="logo-title">Modération en temps réel</div>
+      <div class="logo-subtitle">Démo · Charte V2</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <span class="partner-tag">
+      <span style="width:8px;height:8px;border-radius:50%;background:#1f9d55;display:inline-block;"></span>
+      IA Logora · en ligne
+      <span id="correctionsBadge" class="corrections-badge zero">0 ajustement rédac</span>
+    </span>
+  </div>
+</header>
+
+<div class="container">
+
+  <!-- Bandeau d'état du service (caché par défaut, montré seulement en cas de problème) -->
+  <div id="serverBanner" class="server-banner hidden"></div>
+
+  <!-- Intro bar -->
+  <div class="intro-bar">
+    <div class="intro-text">
+      <strong>Cette démo</strong> applique en temps réel la <strong>charte V2 de L'Équipe</strong> à n'importe quel commentaire que vous saisissez. Décision, raison de rejet (parmi 10 catégories) et score de toxicité 0–100 sont calculés en quelques centaines de millisecondes.
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab active" data-tab="single">Test à l'unité</button>
+    <button class="tab" data-tab="batch">Test en lot</button>
+  </div>
+
+  <!-- SINGLE PANEL -->
+  <div id="panel-single" class="panel">
+    <h2 class="panel-title">Modérer un commentaire</h2>
+    <div class="row">
+      <div class="field">
+        <label for="articleTitle">Article (URL ou titre)</label>
+        <input type="text" id="articleTitle" placeholder="https://www.lequipe.fr/… ou texte libre" />
+      </div>
+      <div class="field">
+        <label for="articleTopic">Sujet / rubrique</label>
+        <select id="articleTopic">
+          <option value="Football">Football</option>
+          <option value="Rugby">Rugby</option>
+          <option value="Tennis">Tennis</option>
+          <option value="Sports d'hiver">Sports d'hiver</option>
+          <option value="Patinage">Patinage</option>
+          <option value="Judo">Judo</option>
+          <option value="Autre sport">Autre sport</option>
+          <option value="Politique sportive / dirigeants">Politique sportive / dirigeants</option>
+        </select>
+      </div>
+    </div>
+    <div class="field" style="margin-bottom: 16px;">
+      <label for="commentSingle">Commentaire</label>
+      <textarea id="commentSingle" placeholder="Saisis ou colle un commentaire à modérer…"></textarea>
+    </div>
+    <div class="actions">
+      <button class="btn" id="btnSingle">
+        <span class="btn-label">Modérer</span>
+      </button>
+      <button class="btn secondary" id="btnExample">Exemple</button>
+      <span class="hint">Astuce : essaie un commentaire « limite » pour voir comment le modèle tranche.</span>
+    </div>
+    <div id="singleResult"></div>
+  </div>
+
+  <!-- BATCH PANEL -->
+  <div id="panel-batch" class="panel hidden">
+    <h2 class="panel-title">Modérer plusieurs commentaires</h2>
+    <div class="row">
+      <div class="field">
+        <label for="articleTitleBatch">Article — URL ou titre (commun)</label>
+        <input type="text" id="articleTitleBatch" placeholder="https://www.lequipe.fr/… ou texte libre" />
+      </div>
+      <div class="field">
+        <label for="articleTopicBatch">Sujet / rubrique</label>
+        <select id="articleTopicBatch">
+          <option value="Football">Football</option>
+          <option value="Rugby">Rugby</option>
+          <option value="Tennis">Tennis</option>
+          <option value="Sports d'hiver">Sports d'hiver</option>
+          <option value="Patinage">Patinage</option>
+          <option value="Judo">Judo</option>
+          <option value="Autre sport">Autre sport</option>
+          <option value="Politique sportive / dirigeants">Politique sportive / dirigeants</option>
+        </select>
+      </div>
+    </div>
+    <div class="field" style="margin-bottom: 16px;">
+      <label for="commentsBatch">Commentaires (un par ligne — max 50)</label>
+      <textarea id="commentsBatch" class="batch" placeholder="Allez l'OM !&#10;Bla bla bla on s'en fout retourne dans ton pays&#10;Très bonne analyse, merci pour cet article."></textarea>
+      <div style="margin-top:8px; font-size:12px; color:var(--gray-700);">
+        ⓘ Mode démo : cadence limitée à 5 modérations / minute. En production, la cadence est dimensionnée selon votre volume.
+      </div>
+    </div>
+    <div class="actions">
+      <button class="btn" id="btnBatch">
+        <span class="btn-label">Modérer tout</span>
+      </button>
+      <button class="btn secondary" id="btnExamplesBatch">Exemples</button>
+      <span class="hint" id="batchHint"></span>
+    </div>
+    <div class="progress-bar-batch hidden" id="batchProgress"><div class="progress-bar-batch-fill" id="batchProgressFill"></div></div>
+    <div id="batchResults"></div>
+  </div>
+
+  <details class="advanced" id="adjustmentsBlock">
+    <summary>Ajustements de la rédaction (<span id="adjustmentsSummaryCount">0</span>)</summary>
+    <p style="font-size:13px; color:var(--gray-700); margin: 10px 0;">
+      Chaque fois que la rédaction clique sur "Pas d'accord", la correction est ajoutée ci-dessous et automatiquement injectée dans la charte pour toutes les modérations suivantes.
+    </p>
+    <div id="correctionsListContainer"></div>
+  </details>
+
+  <details class="advanced">
+    <summary>Voir la charte de modération intégrée (V2 + 10 catégories de rejet)</summary>
+    <pre id="systemPromptPreview"></pre>
+  </details>
+
+</div>
+
+<footer>
+  Logora — Modération en temps réel · Charte V2 intégrée. Démo réalisée pour L'Équipe.
+</footer>
+
+<script>
+// ============================================================================
+// CHARTE V2 + CATÉGORIES (system prompt intégral)
+// ============================================================================
+const SYSTEM_PROMPT = `Tu es le modérateur de l'espace de commentaires de L'Équipe, le quotidien sportif français.
+
+# RÔLE
+Tu reçois un commentaire posté sur un article et tu dois décider en français s'il est ACCEPTÉ ou REJETÉ. Si rejeté, tu donnes une raison parmi 10 libellés clairs. Tu fournis aussi un score de toxicité 0–100 et une explication courte.
+
+# CHARTE DE MODÉRATION (V2)
+L'Équipe est un média sportif populaire. L'espace de commentaires est ouvert, vivant, parfois passionné. La modération vise à :
+- préserver la liberté d'expression et les débats passionnés ;
+- protéger les personnes (sportifs, journalistes, autres lecteurs) ;
+- éviter que le fil bascule dans la haine, l'insulte gratuite, le racisme, la politique étrangère au sport, le hors-sujet répétitif, le spam ou la désinformation.
+
+Principe directeur : un commentaire critique, désaccord, déçu, ironique ou même tranchant reste ACCEPTABLE tant qu'il porte sur le sport / le sujet de l'article et qu'il ne vise pas la personne avec une attaque dégradante.
+
+# 10 CATÉGORIES DE REJET (libellés exacts à utiliser tels quels)
+1. **Discrimination** — propos basés sur l'origine, la couleur de peau, la religion, le genre, l'orientation sexuelle, le handicap. Inclut le racisme **explicite** ("DZ", "barbus", "retourne dans ton pays") ET le racisme **codé / dog whistle** (voir section dédiée plus bas, c'est crucial).
+2. **Insulte / propos agressif** — insulte personnelle dégradante envers un joueur, entraîneur, journaliste, autre commentateur ("clochard", "merde", "abruti fini", attaque ad hominem).
+3. **Diffamation** — accusation grave non étayée (corruption, dopage, triche, agression) présentée comme un fait.
+4. **Atteinte à la vie privée** — révélation d'éléments privés (adresse, vie sentimentale, santé d'un tiers).
+5. **Pornographique** — contenu sexuel explicite.
+6. **Désinformation** — fausse information factuelle présentée comme vraie, propagande (ex. propagande pro-russe, négationnisme).
+7. **Politique hors sport** — digression politique nationale ou internationale sans lien avec le sujet sportif (Macron, RN, Mélenchon, Israël/Palestine, élections…). **Exception** : si l'article PORTE explicitement sur de la politique sportive (dirigeants, fédérations, politique liée au sport), les commentaires politiques restent acceptables tant qu'ils sont liés à ce sujet.
+8. **Spam / hors-sujet** — message qui n'a rien à voir avec l'article ET qui n'apporte rien au débat (pub, doublon évident, "premier !", "test"). **⚠ Être tolérant ici** : un commentaire un peu décalé, une blague, une digression brève sur le sport en général, un "+1" ou "MDR" ne sont PAS du hors-sujet. Ne rejeter que si c'est vraiment du spam ou un message totalement déconnecté ET sans valeur.
+9. **Forme illisible** — message en majuscules intégrales très long, suite de caractères aléatoires, langage SMS extrême rendant le texte incompréhensible.
+10. **Incitation à la haine** — appel à la violence physique contre une personne ou un groupe, soutien explicite à un dictateur ou à des actes violents.
+
+# RACISME CODÉ / DOG WHISTLES — PIÈGES FRÉQUENTS DANS LE FOOT FRANÇAIS
+Beaucoup de commentaires racistes passent les filtres parce qu'au premier degré ils semblent anodins. **Tu dois les détecter et les classer en "Discrimination" (score 75–88).** Voici les motifs récurrents :
+
+- **Référence ironique à la couleur de peau de l'équipe de France** (la majorité des Bleus sont noirs ou d'origine africaine/maghrébine). Exemples à REJETER :
+  - "Contre le Sénégal, la France sera l'équipe avec les maillots bleus" → sous-entend qu'on ne distingue les Français des Sénégalais que par le maillot.
+  - "Heureusement qu'il y a les maillots pour reconnaître les Français"
+  - "France-Maroc ou Maroc-Maroc ?"
+  - "On dirait deux équipes africaines qui jouent"
+  - "Il fait sombre sur la pelouse ce soir"
+  - "Chantez la Marseillaise, vous, les vrais Français !" (sous-entendu : les joueurs ne la chantent pas car pas "vrais Français")
+- **Appellations péjoratives de l'équipe de France** : "l'équipe d'Afrique", "la sélection du Maghreb", "France black-black-black", "Olympique du Maghreb", "team Saint-Denis", "la sélection des banlieues" utilisé péjorativement.
+- **Remise en cause de la francité** des joueurs : "il est français de papier", "naturalisé de la dernière minute", "il a pris quel pays en plus de la France ?", références aux doubles nationalités présentées comme suspectes.
+- **Codes alphanumériques racistes** : "DZ" utilisé pour stigmatiser, "RR" (référence néonazie), "13/52" (référence raciste US qui a migré), "1488".
+- **"Quand ils gagnent ils sont français, quand ils perdent…"** et variantes — formule classique qui sous-entend que les joueurs noirs/arabes ne sont français qu'à conditions.
+- **Religion comme proxy** : "trop de barbus dans l'équipe", "ils jeûnent encore", références au halal/Ramadan pour expliquer une mauvaise performance, "ils prient avant les matchs".
+- **Géographie codée** : "93", "Bondy", "Saint-Denis" utilisés péjorativement, "ils viennent tous de la même zone", références aux banlieues comme tare.
+
+**TEST MENTAL** avant d'accepter un commentaire :
+> Si je retirais le contexte ethnique/racial des joueurs concernés, le commentaire aurait-il encore le même sens ironique ?
+> Si **NON** → c'est probablement un dog whistle → **Discrimination, score 75–85**.
+
+**EN CAS DE DOUTE sur un commentaire visiblement orienté (couleur, origine, religion, "vrais Français"…)** : rejette. Mieux vaut un faux positif sur un cas limite qu'un commentaire raciste qui passe.
+
+# ÉCHELLE DE SCORE DE TOXICITÉ (0–100)
+- 0–25 : message serein, accepté (compliment, analyse posée, désaccord poli)
+- 30–45 : critique vive, ironie tranchante, déception — accepté
+- 50–65 : zone limite (forme un peu agressive, hors-sujet léger) — souvent accepté si pas d'attaque
+- 70–85 : atteintes graves (insultes ad hominem, diffamation, vie privée) — rejeté
+- 88–100 : haine / racisme / violence / pornographie — rejeté fermement
+
+# RÈGLES DE DÉCISION
+- Sois TOLÉRANT par défaut sur l'humour, la critique vive, l'ironie sportive. L'Équipe a besoin d'un espace vivant. Si tu hésites sur un commentaire non-discriminatoire, accepte avec un score 45–55.
+- **MAIS** sois STRICT sur le racisme codé : applique systématiquement le test mental ci-dessus. Un dog whistle bien construit doit être rejeté.
+- N'utilise "Spam / hors-sujet" qu'avec parcimonie (cf. retour de la rédaction : cette catégorie a été surutilisée dans une version précédente).
+- Si le sujet de l'article EST politique sportive, ne classe pas en "Politique hors sport" un commentaire politique cohérent avec ce sujet.
+- Tiens TOUJOURS compte du contexte fourni : un même commentaire peut être anodin ou raciste selon l'adversaire / le contexte du match.
+
+# EXPLOITATION DU CONTEXTE ARTICLE
+Le contexte fourni peut être :
+- une **URL** (ex : https://www.lequipe.fr/Football/Article/France-senegal-...) — utilise le chemin de l'URL et le titre détecté pour identifier le match, les équipes, le sujet ;
+- un **titre détecté** + **chapeau / description** récupérés depuis l'article ;
+- un titre libre saisi par le modérateur ;
+- une rubrique (Football, Rugby, Politique sportive…).
+
+**Cas critique** : si l'article concerne un match opposant la France à une équipe d'Afrique (Sénégal, Maroc, Algérie, Tunisie, Cameroun, Côte d'Ivoire, etc.) OU une compétition liée (CAN, Coupe d'Afrique des Nations…), DÉCLENCHE une vigilance maximale sur les dog whistles raciaux — c'est statistiquement le contexte où ils sont les plus fréquents.
+
+De la même façon, si le contexte cite un joueur fréquemment ciblé par le racisme (Mbappé, Camavinga, Tchouaméni, Kolo Muani, Zaïre-Emery, etc.), augmente la vigilance.
+
+# FORMAT DE RÉPONSE OBLIGATOIRE
+Tu réponds UNIQUEMENT par un JSON valide, sans texte avant ni après, de la forme :
+
+{
+  "decision": "accepté" | "rejeté",
+  "raison": "<libellé exact d'une des 10 catégories>" | null,
+  "score_toxicite": <entier 0-100>,
+  "explication": "<une phrase courte en français expliquant ta décision, max 25 mots>"
+}
+
+Si la décision est "accepté", "raison" doit être null.
+Si la décision est "rejeté", "raison" doit être l'un des 10 libellés exacts ci-dessus.`;
+
+// ============================================================================
+// EXEMPLES
+// ============================================================================
+const EXAMPLES_SINGLE = [
+  { title: "OM-PSG : Benatia déclare avoir tout fait pour calmer le jeu", topic: "Football",
+    comment: "Benatia donne des leçons alors qu'il est le premier à mettre de l'huile sur le feu. Quelle hypocrisie cet OM." },
+  { title: "France-Sénégal : Deschamps confirme la liste", topic: "Football",
+    comment: "Devant France-Sénégal pour info, l'équipe de France ce sera les joueurs en bleu. Comme à chaque fois ça va être un festival de plongeons et de fautes." },
+  { title: "Tour de France : Pogačar s'impose au sommet", topic: "Autre sport",
+    comment: "MAGNIFIQUE !! Quel coureur" },
+  { title: "Rugby : XV de France, le retour de Dupont", topic: "Rugby",
+    comment: "Mélenchon a encore dit n'importe quoi sur le rugby hier, ce pays est foutu avec ces gens-là." }
+];
+const EXAMPLES_BATCH = `Allez l'OM, on va gagner !
+Ce joueur c'est un clochard fini il devrait retourner d'où il vient
+Excellente analyse, merci pour cet article très complet.
+DZ DZ DZ on est les meilleurs
+Bof, je trouve qu'il manque de jus en ce moment, dommage.
+Premier !
+LR LRLR LRRL kkk azertyuiop test
+Mélenchon a raison sur tout, vive la France insoumise
+Bon match en perspective, j'ai hâte de voir Mbappé contre Vinicius`;
+
+// ============================================================================
+// CONFIGURATION (Logora)
+// ============================================================================
+const LOGORA_ENDPOINT = "/api/moderate";
+// Limite de cadence côté compte Logora (5 modérations / 60 s en mode démo).
+const RATE_LIMIT_BATCH_SIZE = 5;
+const RATE_LIMIT_WINDOW_MS = 61000;
+
+// ============================================================================
+// API CALL (1 modération)
+// ============================================================================
+async function moderateCommentOnce(comment, articleTitle, articleTopic) {
+  const response = await fetch(LOGORA_ENDPOINT, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      comment: comment,
+      article_title: articleTitle,
+      article_topic: articleTopic,
+      system_prompt: SYSTEM_PROMPT
+    })
+  });
+
+  const text = await response.text();
+  let body;
+  try { body = JSON.parse(text); } catch (e) { body = null; }
+
+  if (!response.ok) {
+    const errType = body?.error?.type;
+    const errMsg = body?.error?.message || `Erreur ${response.status}`;
+    const err = new Error(errMsg);
+    err.status = response.status;
+    err.type = errType;
+    throw err;
+  }
+
+  const out = body?.content?.[0]?.text || "";
+  const match = out.match(/\{[\s\S]*\}/);
+  if (!match) throw new Error("Réponse inattendue du moteur Logora.");
+  return JSON.parse(match[0]);
+}
+
+// Retry avec backoff sur 429 (sécurité de dernière ligne).
+async function moderateComment(comment, articleTitle, articleTopic) {
+  const maxRetries = 3;
+  let delay = 15000;
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      return await moderateCommentOnce(comment, articleTitle, articleTopic);
+    } catch (err) {
+      const isRate = err.status === 429 || err.type === "rate_limit";
+      if (!isRate || attempt === maxRetries) throw err;
+      await sleep(delay);
+      delay = Math.min(delay * 1.5, 45000);
+    }
+  }
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// ============================================================================
+// UI : TABS
+// ============================================================================
+document.querySelectorAll(".tab").forEach(tab => {
+  tab.addEventListener("click", () => {
+    document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+    tab.classList.add("active");
+    const which = tab.dataset.tab;
+    document.getElementById("panel-single").classList.toggle("hidden", which !== "single");
+    document.getElementById("panel-batch").classList.toggle("hidden", which !== "batch");
+  });
+});
+
+// ============================================================================
+// UI : RENDER SCORE BAR COLOR
+// ============================================================================
+function scoreColor(s) {
+  if (s <= 30) return "#1f9d55";       // green
+  if (s <= 50) return "#84cc16";       // lime
+  if (s <= 65) return "#f59e0b";       // amber
+  if (s <= 85) return "#ef4444";       // red
+  return "#991b1b";                     // deep red
+}
+
+// ============================================================================
+// UI : SINGLE MODE
+// ============================================================================
+const btnSingle = document.getElementById("btnSingle");
+const btnExample = document.getElementById("btnExample");
+const singleResult = document.getElementById("singleResult");
+let exampleIdx = 0;
+
+btnExample.addEventListener("click", () => {
+  const ex = EXAMPLES_SINGLE[exampleIdx % EXAMPLES_SINGLE.length];
+  exampleIdx++;
+  document.getElementById("articleTitle").value = ex.title;
+  document.getElementById("articleTopic").value = ex.topic;
+  document.getElementById("commentSingle").value = ex.comment;
+});
+
+btnSingle.addEventListener("click", async () => {
+  const articleTitle = document.getElementById("articleTitle").value.trim();
+  const articleTopic = document.getElementById("articleTopic").value;
+  const comment = document.getElementById("commentSingle").value.trim();
+
+  if (!comment) { showError(singleResult, "Saisissez un commentaire à modérer."); return; }
+
+  setButtonLoading(btnSingle, true, "Modération…");
+  singleResult.innerHTML = "";
+
+  try {
+    const t0 = performance.now();
+    const result = await moderateComment(comment, articleTitle, articleTopic);
+    const dt = Math.round(performance.now() - t0);
+    renderSingleResult(result, comment, dt);
+  } catch (err) {
+    showError(singleResult, "Erreur : " + err.message);
+  } finally {
+    setButtonLoading(btnSingle, false, "Modérer");
+  }
+});
+
+function renderSingleResult(result, comment, latencyMs) {
+  const isAccepted = result.decision === "accepté";
+  const color = scoreColor(result.score_toxicite);
+  const articleTitle = document.getElementById("articleTitle").value.trim();
+  const articleTopic = document.getElementById("articleTopic").value;
+
+  singleResult.innerHTML = `
+    <div class="result-card">
+      <div class="result-header ${isAccepted ? "accepted" : "rejected"}">
+        <span class="badge ${isAccepted ? "accepted" : "rejected"}">
+          <span class="badge-icon">${isAccepted ? "✓" : "✕"}</span>
+          ${isAccepted ? "ACCEPTÉ" : "REJETÉ"}
+        </span>
+        ${!isAccepted && result.raison ? `<span class="reason-label">Raison : ${escapeHtml(result.raison)}</span>` : `<span class="reason-label" style="color:var(--green)">Aucune raison de rejet</span>`}
+      </div>
+      <div class="result-body">
+        <div class="comment-preview">« ${escapeHtml(comment)} »</div>
+        <div class="explanation"><strong>Analyse :</strong> ${escapeHtml(result.explication || "")}</div>
+        <div class="score-block">
+          <div class="score-label">
+            <span>Score de toxicité</span>
+            <span class="score-value">${result.score_toxicite}/100 · latence ${latencyMs} ms</span>
+          </div>
+          <div class="score-bar">
+            <div class="score-fill" style="width:${result.score_toxicite}%; background:${color}"></div>
+          </div>
+          <div class="score-bands">
+            <span>0 · serein</span><span>50 · limite</span><span>100 · haine</span>
+          </div>
+        </div>
+      </div>
+      <div class="feedback-area" id="feedbackArea">
+        <button class="feedback-toggle" id="feedbackToggle">👎 Pas d'accord avec cette décision</button>
+        <div class="feedback-form hidden" id="feedbackForm"></div>
+      </div>
+    </div>`;
+
+  // Wire up the feedback widget with the result context
+  attachFeedbackHandlers({
+    comment: comment,
+    article_title: articleTitle,
+    article_topic: articleTopic,
+    ai_decision: result.decision,
+    ai_raison: result.raison || "",
+    ai_score: result.score_toxicite,
+  });
+}
+
+// ============================================================================
+// FEEDBACK — désaccord & ajustement de la charte
+// ============================================================================
+const REJECTION_REASONS = [
+  "Discrimination",
+  "Insulte / propos agressif",
+  "Diffamation",
+  "Atteinte à la vie privée",
+  "Pornographique",
+  "Désinformation",
+  "Politique hors sport",
+  "Spam / hors-sujet",
+  "Forme illisible",
+  "Incitation à la haine"
+];
+
+function attachFeedbackHandlers(ctx) {
+  const toggle = document.getElementById("feedbackToggle");
+  const form = document.getElementById("feedbackForm");
+  if (!toggle || !form) return;
+
+  toggle.addEventListener("click", () => {
+    form.classList.remove("hidden");
+    toggle.classList.add("hidden");
+    form.innerHTML = renderFeedbackForm(ctx);
+    wireFeedbackForm(form, ctx);
+  });
+}
+
+function renderFeedbackForm(ctx) {
+  const proposedDecision = ctx.ai_decision === "accepté" ? "rejeté" : "accepté";
+  const reasonsHtml = REJECTION_REASONS.map(r => `<option value="${escapeHtml(r)}">${escapeHtml(r)}</option>`).join("");
+  return `
+    <h4>Quelle aurait dû être la décision ?</h4>
+    <div class="radio-group">
+      <label><input type="radio" name="expected" value="accepté" ${proposedDecision === "accepté" ? "checked" : ""}/><span>Accepter le commentaire</span></label>
+      <label><input type="radio" name="expected" value="rejeté" ${proposedDecision === "rejeté" ? "checked" : ""}/><span>Rejeter le commentaire</span></label>
+    </div>
+    <div id="reasonWrapper" class="${proposedDecision === "rejeté" ? "" : "hidden"}">
+      <label style="display:block; font-size:12px; font-weight:600; color:var(--gray-700); margin-bottom:4px; text-transform:uppercase; letter-spacing:0.4px;">Raison de rejet</label>
+      <select id="expectedReason">${reasonsHtml}</select>
+    </div>
+    <label style="display:block; font-size:12px; font-weight:600; color:var(--gray-700); margin-bottom:4px; text-transform:uppercase; letter-spacing:0.4px;">Justification — pourquoi est-ce une erreur ?</label>
+    <textarea id="justification" placeholder="Ex : c'est une blague courante du milieu, pas une attaque ; ou : ce commentaire vise clairement l'origine du joueur, pas son jeu…"></textarea>
+    <div class="form-actions">
+      <button type="button" class="btn-small cancel" id="cancelFeedback">Annuler</button>
+      <button type="button" class="btn-small primary" id="submitFeedback">Enregistrer l'ajustement</button>
+    </div>
+  `;
+}
+
+function wireFeedbackForm(form, ctx) {
+  const radios = form.querySelectorAll('input[name="expected"]');
+  const reasonWrapper = form.querySelector("#reasonWrapper");
+  radios.forEach(r => r.addEventListener("change", () => {
+    if (r.value === "rejeté" && r.checked) reasonWrapper.classList.remove("hidden");
+    if (r.value === "accepté" && r.checked) reasonWrapper.classList.add("hidden");
+  }));
+
+  form.querySelector("#cancelFeedback").addEventListener("click", () => {
+    form.classList.add("hidden");
+    document.getElementById("feedbackToggle").classList.remove("hidden");
+  });
+
+  form.querySelector("#submitFeedback").addEventListener("click", async () => {
+    const expected = form.querySelector('input[name="expected"]:checked')?.value;
+    const expectedReason = expected === "rejeté" ? form.querySelector("#expectedReason").value : "";
+    const justification = form.querySelector("#justification").value.trim();
+
+    if (!expected) {
+      alert("Choisis Accepter ou Rejeter.");
+      return;
+    }
+
+    const submitBtn = form.querySelector("#submitFeedback");
+    submitBtn.disabled = true;
+    submitBtn.textContent = "Enregistrement…";
+
+    try {
+      const r = await fetch("/api/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          comment: ctx.comment,
+          article_title: ctx.article_title,
+          article_topic: ctx.article_topic,
+          ai_decision: ctx.ai_decision,
+          ai_raison: ctx.ai_raison,
+          ai_score: ctx.ai_score,
+          expected_decision: expected,
+          expected_raison: expectedReason,
+          justification: justification,
+        })
+      });
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      const data = await r.json();
+      form.innerHTML = `<div class="feedback-success">
+        ✓ Ajustement enregistré. La rédaction a désormais ${data.count} correction${data.count > 1 ? "s" : ""} active${data.count > 1 ? "s" : ""}.<br>
+        <span style="font-weight:normal; color:var(--gray-700); font-size:12px;">Le moteur s'aligne sur ces attentes pour toutes les modérations suivantes.</span>
+      </div>`;
+      refreshCorrectionsCount();
+      refreshCorrectionsList();
+    } catch (err) {
+      submitBtn.disabled = false;
+      submitBtn.textContent = "Enregistrer l'ajustement";
+      alert("Erreur lors de l'enregistrement : " + err.message);
+    }
+  });
+}
+
+// ============================================================================
+// Compteur d'ajustements (header) + liste détaillée (charte)
+// ============================================================================
+async function refreshCorrectionsCount() {
+  try {
+    const r = await fetch("/api/feedback");
+    if (!r.ok) return;
+    const data = await r.json();
+    const badge = document.getElementById("correctionsBadge");
+    if (!badge) return;
+    const n = data.count || 0;
+    badge.textContent = n === 0
+      ? "0 ajustement rédac"
+      : (n === 1 ? "1 ajustement rédac" : `${n} ajustements rédac`);
+    badge.classList.toggle("zero", n === 0);
+  } catch (e) { /* silencieux */ }
+}
+
+async function refreshCorrectionsList() {
+  const container = document.getElementById("correctionsListContainer");
+  if (!container) return;
+  try {
+    const r = await fetch("/api/feedback");
+    if (!r.ok) return;
+    const data = await r.json();
+    if (!data.corrections || data.corrections.length === 0) {
+      container.innerHTML = `<div style="padding:12px; color:var(--gray-700); font-size:13px; text-align:center;">Aucun ajustement enregistré pour l'instant.</div>`;
+      return;
+    }
+    container.innerHTML = `<div class="corrections-list">` + data.corrections.slice().reverse().map(c => `
+      <div class="correction-item">
+        <div class="ci-body">
+          <div class="ci-quote">« ${escapeHtml((c.comment || "").slice(0, 200))} »</div>
+          <div class="ci-arrow">
+            IA : <strong>${escapeHtml(c.ai_decision || "?")}</strong>${c.ai_raison ? " (" + escapeHtml(c.ai_raison) + ")" : ""}
+            → Rédac : <strong>${escapeHtml(c.expected_decision || "?")}</strong>${c.expected_raison ? " (" + escapeHtml(c.expected_raison) + ")" : ""}
+          </div>
+          ${c.justification ? `<div class="ci-just">${escapeHtml(c.justification)}</div>` : ""}
+        </div>
+        <button class="ci-delete" title="Supprimer cet ajustement" data-id="${escapeHtml(c.id)}">×</button>
+      </div>
+    `).join("") + `</div>`;
+    container.querySelectorAll(".ci-delete").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        if (!confirm("Supprimer cet ajustement ? Le moteur ne s'y alignera plus.")) return;
+        try {
+          await fetch("/api/feedback/delete", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ id: btn.dataset.id })
+          });
+          refreshCorrectionsCount();
+          refreshCorrectionsList();
+        } catch (e) {}
+      });
+    });
+  } catch (e) { /* silencieux */ }
+}
+
+// ============================================================================
+// UI : BATCH MODE
+// ============================================================================
+const btnBatch = document.getElementById("btnBatch");
+const btnExamplesBatch = document.getElementById("btnExamplesBatch");
+const batchResults = document.getElementById("batchResults");
+const batchProgress = document.getElementById("batchProgress");
+const batchProgressFill = document.getElementById("batchProgressFill");
+
+btnExamplesBatch.addEventListener("click", () => {
+  document.getElementById("articleTitleBatch").value = "France-Sénégal : Deschamps confirme la liste";
+  document.getElementById("articleTopicBatch").value = "Football";
+  document.getElementById("commentsBatch").value = EXAMPLES_BATCH;
+});
+
+btnBatch.addEventListener("click", async () => {
+  const articleTitle = document.getElementById("articleTitleBatch").value.trim();
+  const articleTopic = document.getElementById("articleTopicBatch").value;
+  const raw = document.getElementById("commentsBatch").value.split("\n").map(s => s.trim()).filter(Boolean);
+
+  if (!raw.length) { showError(batchResults, "Collez au moins un commentaire (un par ligne)."); return; }
+  if (raw.length > 50) { showError(batchResults, "Limite : 50 commentaires par batch pour la démo."); return; }
+
+  setButtonLoading(btnBatch, true, `Modération (0/${raw.length})…`);
+  batchResults.innerHTML = "";
+  batchProgress.classList.remove("hidden");
+  batchProgressFill.style.width = "0%";
+
+  // Batch par paquets de RATE_LIMIT_BATCH_SIZE avec cooldown RATE_LIMIT_WINDOW_MS
+  // pour respecter la cadence du compte Logora (5 modérations / minute en démo).
+  const results = new Array(raw.length);
+  let done = 0;
+
+  for (let i = 0; i < raw.length; i += RATE_LIMIT_BATCH_SIZE) {
+    const slice = raw.slice(i, i + RATE_LIMIT_BATCH_SIZE).map((c, k) => ({ comment: c, idx: i + k }));
+    const batchStart = Date.now();
+
+    await Promise.all(slice.map(async item => {
+      try {
+        const r = await moderateComment(item.comment, articleTitle, articleTopic);
+        results[item.idx] = { comment: item.comment, ...r };
+      } catch (err) {
+        results[item.idx] = {
+          comment: item.comment,
+          decision: "erreur",
+          raison: null,
+          score_toxicite: 0,
+          explication: err.message
+        };
+      }
+      done++;
+      batchProgressFill.style.width = (done / raw.length * 100) + "%";
+      btnBatch.querySelector(".btn-label").textContent = `Modération (${done}/${raw.length})…`;
+    }));
+
+    // Rendu intermédiaire après chaque paquet
+    renderBatchResults(results.filter(Boolean));
+
+    // Cooldown avant le prochain paquet (sauf si c'était le dernier)
+    if (i + RATE_LIMIT_BATCH_SIZE < raw.length) {
+      const elapsed = Date.now() - batchStart;
+      const wait = Math.max(0, RATE_LIMIT_WINDOW_MS - elapsed);
+      if (wait > 0) {
+        await countdownWait(wait, btnBatch.querySelector(".btn-label"), done, raw.length);
+      }
+    }
+  }
+
+  renderBatchResults(results);
+  setButtonLoading(btnBatch, false, "Modérer tout");
+  batchProgress.classList.add("hidden");
+});
+
+// Petit countdown pendant le cooldown de cadence, pour que l'attente
+// soit visible et non vécue comme un "freeze".
+async function countdownWait(totalMs, btnLabel, done, total) {
+  const start = Date.now();
+  while (true) {
+    const elapsed = Date.now() - start;
+    const remain = Math.max(0, totalMs - elapsed);
+    if (remain === 0) break;
+    const secs = Math.ceil(remain / 1000);
+    btnLabel.textContent = `Cadence Logora — prochain paquet dans ${secs}s (${done}/${total})…`;
+    await sleep(Math.min(500, remain));
+  }
+}
+
+function renderBatchResults(results) {
+  const accepted = results.filter(r => r.decision === "accepté").length;
+  const rejected = results.filter(r => r.decision === "rejeté").length;
+  const total = results.length;
+  const rate = total ? Math.round(rejected / total * 100) : 0;
+
+  let rows = results.map((r, i) => {
+    const color = scoreColor(r.score_toxicite || 0);
+    const cls = r.decision === "accepté" ? "accepted" : (r.decision === "rejeté" ? "rejected" : "rejected");
+    const label = r.decision === "accepté" ? "ACCEPTÉ" : (r.decision === "rejeté" ? "REJETÉ" : "ERREUR");
+    return `
+      <tr>
+        <td style="color:var(--gray-700);">${i+1}</td>
+        <td class="comment-cell">${escapeHtml(r.comment)}</td>
+        <td class="decision"><span class="mini-badge ${cls}">${label}</span></td>
+        <td>${r.raison ? escapeHtml(r.raison) : "—"}</td>
+        <td class="score-cell">
+          ${r.score_toxicite ?? 0}
+          <div class="mini-score-bar"><div class="mini-score-fill" style="width:${r.score_toxicite || 0}%; background:${color}"></div></div>
+        </td>
+        <td style="font-size:12px; color:var(--gray-700); max-width:280px;">${escapeHtml(r.explication || "")}</td>
+      </tr>`;
+  }).join("");
+
+  batchResults.innerHTML = `
+    <div class="batch-results">
+      <div class="batch-summary">
+        <div class="stat"><div class="stat-label">Total modéré</div><div class="stat-value">${total}</div></div>
+        <div class="stat accepted"><div class="stat-label">Acceptés</div><div class="stat-value">${accepted}</div></div>
+        <div class="stat rejected"><div class="stat-label">Rejetés</div><div class="stat-value">${rejected}</div></div>
+        <div class="stat"><div class="stat-label">Taux de rejet</div><div class="stat-value">${rate}%</div></div>
+      </div>
+      <table>
+        <thead>
+          <tr><th>#</th><th>Commentaire</th><th>Décision</th><th>Raison</th><th>Score</th><th>Analyse</th></tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>`;
+}
+
+// ============================================================================
+// HELPERS
+// ============================================================================
+function setButtonLoading(btn, loading, label) {
+  btn.disabled = loading;
+  const lab = btn.querySelector(".btn-label");
+  if (loading) {
+    lab.innerHTML = `<span class="loader"></span> ${label}`;
+  } else {
+    lab.textContent = label;
+  }
+}
+function showError(container, msg) {
+  container.innerHTML = `<div class="error">${escapeHtml(msg)}</div>`;
+}
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+// Show system prompt preview
+document.getElementById("systemPromptPreview").textContent = SYSTEM_PROMPT;
+
+// Initial fetch of corrections (counter + list)
+refreshCorrectionsCount();
+refreshCorrectionsList();
+
+// Also update the summary count in the details element
+(async function syncSummaryCount() {
+  const update = () => {
+    const badge = document.getElementById("correctionsBadge");
+    const summary = document.getElementById("adjustmentsSummaryCount");
+    if (!badge || !summary) return;
+    // Parse number from badge text
+    const m = badge.textContent.match(/(\d+)/);
+    summary.textContent = m ? m[1] : "0";
+  };
+  // Hook into refresh by polling DOM mutation
+  const obs = new MutationObserver(update);
+  const target = document.getElementById("correctionsBadge");
+  if (target) obs.observe(target, { childList: true, characterData: true, subtree: true });
+  update();
+})();
+
+// ============================================================================
+// Health check au chargement — bandeau d'alerte si le service n'est pas joignable
+// ============================================================================
+(async function checkService() {
+  const banner = document.getElementById("serverBanner");
+  const isFileProtocol = window.location.protocol === "file:";
+
+  if (isFileProtocol) {
+    banner.innerHTML = `
+      <strong>⚠ Le service Logora n'est pas joignable.</strong> Cette page a été ouverte directement depuis le système de fichiers (URL en <code style="display:inline; padding:1px 6px; background:#fff;">file://…</code>), ce qui empêche les appels au moteur de modération.
+      <br><br>Démarre le service depuis un terminal :
+      <code>cd ~/Documents  # ou le dossier où se trouve serve.py
+python3 serve.py</code>
+      puis ouvre <strong>http://localhost:8000</strong> dans ton navigateur.
+    `;
+    banner.classList.remove("hidden");
+    return;
+  }
+
+  try {
+    const r = await fetch("/health", { method: "GET" });
+    if (!r.ok) throw new Error(r.status);
+    // Service OK — pas de bandeau, on reste discret.
+  } catch (e) {
+    banner.innerHTML = `
+      <strong>⚠ Le service Logora n'est pas joignable.</strong> Le serveur local ne répond pas sur le port 8000.
+      <br><br>Vérifie qu'un terminal exécute bien :
+      <code>python3 serve.py</code>
+      Puis recharge cette page (Cmd+R).
+    `;
+    banner.classList.remove("hidden");
+  }
+})();
+</script>
+</body>
+</html>

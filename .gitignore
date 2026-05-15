@@ -1,0 +1,22 @@
+# Secrets et données locales — ne JAMAIS committer
+config.py
+corrections.json
+.env
+.env.*
+*.pem
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Éditeurs
+.vscode/
+.idea/
+*.swp

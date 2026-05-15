@@ -1,0 +1,1 @@
+# Aucune dépendance externe — uniquement la stdlib Python 3.10+
